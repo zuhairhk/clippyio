@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 from pathlib import Path
 from processors.audio import extract_audio
 from processors.transcribe import transcribe_audio
+from utils.transcript import save_transcript
+from processors.summary import generate_summary
+from processors.caption import generate_caption
+from processors.clips import detect_clips
+from processors.cut import cut_clip
 
 load_dotenv()
 
@@ -71,12 +76,57 @@ def main():
         job, receipt = result
         print("Got job:", job)
         
+        # DOWNLOAD VIDEO
         video_path = download_video(job["s3_key"])
         print("Downloaded to:", video_path)
+        # EXTRACT AUDIO + TRANSCRIBE & SAVE TRANSCRIPT
         audio_path = extract_audio(video_path)
         print("Audio extracted:", audio_path)
         transcript = transcribe_audio(audio_path)
-        print("Transcript text:", transcript["text"][:200])
+        print("Transcription done.")
+        transcript_path = save_transcript(transcript, job["job_id"])
+        print("Transcript saved to:", transcript_path)
+        
+        # PRINT TRANSCRIPT PREVIEW
+        segments = transcript.get("segments", [])
+        print(f"Total segments: {len(segments)}")
+        for seg in segments[:5]:
+            print(
+                f"[{seg['start']:.2f}s → {seg['end']:.2f}s] {seg['text']}"
+            )
+
+        # CLIP DETECTION
+        clips = detect_clips(segments)
+        print(f"Detected {len(clips)} clips")
+        for c in clips:
+            print(f"[{c['start']}s → {c['end']}s] ({c['duration']}s)")
+
+        # CUT CLIPS
+        clip_paths = []
+        for idx, clip in enumerate(clips):
+            path = cut_clip(
+                video_path=video_path,
+                start=clip["start"],
+                end=clip["end"],
+                index=idx,
+                job_id=job["job_id"],
+            )
+            clip_paths.append(path)
+            print("Clip created:", path)
+
+        # SUMMARY + CAPTION GENERATION
+        try:
+            summary = generate_summary(transcript["text"])
+            print("Summary:", summary)
+        except Exception as e:
+            print("Summary failed:", e)
+            summary = None
+        try:
+            caption = generate_caption(transcript["text"])
+            print("Caption:", caption)
+        except Exception as e:
+            print("Caption failed:", e)
+            caption = None
 
         delete_message(receipt)
         print("Job done\n")
