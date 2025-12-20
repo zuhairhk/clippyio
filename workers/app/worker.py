@@ -4,6 +4,7 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 from processors.audio import extract_audio
+from processors.transcribe import transcribe_audio
 
 load_dotenv()
 
@@ -74,6 +75,8 @@ def main():
         print("Downloaded to:", video_path)
         audio_path = extract_audio(video_path)
         print("Audio extracted:", audio_path)
+        transcript = transcribe_audio(audio_path)
+        print("Transcript text:", transcript["text"][:200])
 
         delete_message(receipt)
         print("Job done\n")
