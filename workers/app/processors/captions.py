@@ -44,13 +44,13 @@ def burn_captions(video_path: Path, srt_path: Path, out_path: Path):
                 f"{srt_path}:force_style="
                 "'PlayResY=1920,"
                 "Fontname=Arial,"
-                "Fontsize=18,"
+                "Fontsize=40,"
                 "PrimaryColour=&HFFFFFF&,"
                 "OutlineColour=&H000000&,"
-                "Outline=2,"
+                "Outline=3,"
                 "Shadow=0,"
                 "Alignment=2,"
-                "MarginV=160'"
+                "MarginV=120'"
             ),
             "-c:a", "copy",
             str(out_path),
