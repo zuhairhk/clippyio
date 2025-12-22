@@ -103,7 +103,7 @@ export default function JobPage() {
             Status: {status}
           </p>
           <p className="mt-4 text-neutral-500 text-sm">
-            This usually takes under a minute
+            This usually takes 1-5 minutes
           </p>
         </div>
       </PageShell>
