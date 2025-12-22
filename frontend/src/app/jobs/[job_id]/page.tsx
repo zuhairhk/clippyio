@@ -76,12 +76,12 @@ export default function JobPage() {
     }
   }
 
-  // ---------------- Layout shell ----------------
+  // ---------------- Shared layout ----------------
   function PageShell({ children }: { children: React.ReactNode }) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 flex justify-center px-4 py-8">
-        <div className="w-full max-w-4xl flex flex-col gap-6">
-          <h1 className="text-center text-4xl font-semibold text-white tracking-tight">
+        <div className="w-full max-w-4xl">
+          <h1 className="text-center text-4xl font-semibold text-white tracking-tight mb-8">
             ClippyIO
           </h1>
           {children}
@@ -94,7 +94,7 @@ export default function JobPage() {
   if (status === "queued" || status === "processing") {
     return (
       <PageShell>
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-10 text-center">
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-8 text-center">
           <div className="mx-auto mb-6 h-12 w-12 rounded-full border-2 border-white/20 border-t-white animate-spin" />
           <p className="text-white text-lg font-medium">
             Processing your video
@@ -103,7 +103,7 @@ export default function JobPage() {
             Status: {status}
           </p>
           <p className="mt-4 text-neutral-500 text-sm">
-            Usually takes under a minute
+            This usually takes under a minute
           </p>
         </div>
       </PageShell>
@@ -114,17 +114,17 @@ export default function JobPage() {
   if (status === "failed") {
     return (
       <PageShell>
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 backdrop-blur-xl shadow-xl p-10 text-center">
+        <div className="rounded-2xl border border-red-500/20 bg-red-500/5 backdrop-blur-xl shadow-xl p-8 text-center">
           <p className="text-red-400 text-lg font-medium">
-            Processing failed
+            Something went wrong
           </p>
           <p className="mt-2 text-neutral-400 text-sm">
-            Please try again
+            The job failed to process
           </p>
 
           <button
             onClick={() => router.push("/")}
-            className="mt-6 inline-flex items-center justify-center rounded-full bg-white text-neutral-900 font-medium px-8 py-3 hover:bg-neutral-200 transition"
+            className="mt-6 rounded-full bg-white text-neutral-900 font-medium px-6 py-3 hover:bg-neutral-200 transition"
           >
             Upload another video
           </button>
@@ -133,23 +133,23 @@ export default function JobPage() {
     );
   }
 
+  // ---------------- Results ----------------
   if (!results) return null;
 
   const clip = results.clips[activeClip];
 
-  // ---------------- Results ----------------
   return (
     <PageShell>
       {/* Summary + Caption */}
-      <section className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6">
+      <section className="grid md:grid-cols-2 gap-4 mb-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
           <h2 className="text-white font-medium mb-2">Summary</h2>
           <p className="text-neutral-300 text-sm leading-relaxed">
             {results.summary ?? "No summary generated."}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6">
+        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
           <h2 className="text-white font-medium mb-2">Caption</h2>
           <p className="text-neutral-300 text-sm">
             {results.caption ?? "No caption generated."}
@@ -159,23 +159,37 @@ export default function JobPage() {
 
       {/* Clip Viewer */}
       {results.clips.length > 0 && (
-        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6 flex flex-col gap-4">
-          <div className="relative w-full rounded-xl overflow-hidden bg-black">
+        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6">
+          {/* Video stage */}
+          <div className="relative rounded-xl bg-neutral-800/60 flex items-center justify-center overflow-hidden">
             <video
               key={activeClip}
               src={clip.url}
               controls
               preload="metadata"
-              className="w-full max-h-[60vh] object-contain"
+              className="
+                max-h-[60vh]
+                w-auto
+                max-w-full
+                rounded-lg
+                object-contain
+                shadow-2xl
+              "
             />
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-between text-sm">
+          <div className="mt-4 flex items-center justify-between text-sm">
             <button
               onClick={() => setActiveClip(i => Math.max(i - 1, 0))}
               disabled={activeClip === 0}
-              className="rounded-full px-5 py-2 bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 transition"
+              className="
+                px-4 py-2 rounded-full
+                bg-white/10 text-white
+                hover:bg-white/20
+                disabled:opacity-40
+                transition
+              "
             >
               Prev
             </button>
@@ -191,34 +205,40 @@ export default function JobPage() {
                 )
               }
               disabled={activeClip === results.clips.length - 1}
-              className="rounded-full px-5 py-2 bg-white/10 text-white hover:bg-white/20 disabled:opacity-30 transition"
+              className="
+                px-4 py-2 rounded-full
+                bg-white/10 text-white
+                hover:bg-white/20
+                disabled:opacity-40
+                transition
+              "
             >
               Next
             </button>
           </div>
 
           {/* Download */}
-          <div className="text-center text-sm">
+          <div className="mt-4 text-center">
             <a
               href={clip.url}
               target="_blank"
               rel="noreferrer"
-              className="text-white underline underline-offset-4"
+              className="text-white underline text-sm"
             >
               Download clip
             </a>
-            <span className="ml-2 text-neutral-500">
+            <span className="text-neutral-500 text-xs ml-2">
               {clip.duration.toFixed(1)}s
             </span>
           </div>
         </section>
       )}
 
-      {/* Footer */}
-      <div className="pt-4 text-center">
+      {/* Footer Action */}
+      <div className="mt-8 text-center">
         <button
           onClick={() => router.push("/")}
-          className="inline-flex items-center justify-center rounded-full bg-white text-neutral-900 font-medium px-10 py-3 hover:bg-neutral-200 transition"
+          className="rounded-full bg-white text-neutral-900 font-medium px-6 py-3 hover:bg-neutral-200 transition"
         >
           Upload another video
         </button>
