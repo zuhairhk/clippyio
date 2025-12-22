@@ -133,7 +133,7 @@ def main():
                         out_path=srt_path,
                     )
 
-                    captioned = clip_out_dir / f"clip_{idx}.mp4"
+                    captioned = clip_out_dir / f"clip_{idx}_cap.mp4"
                     burn_captions(
                         video_path=raw_clip,
                         srt_path=srt_path,

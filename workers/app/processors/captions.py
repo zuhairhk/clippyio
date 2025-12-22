@@ -31,6 +31,9 @@ def build_srt(segments, start, end, out_path: Path):
 
 
 def burn_captions(video_path: Path, srt_path: Path, out_path: Path):
+    if video_path.resolve() == out_path.resolve():
+        raise ValueError("Output path must be different from input path")
+
     subprocess.run(
         [
             "ffmpeg", "-y",
@@ -38,18 +41,15 @@ def burn_captions(video_path: Path, srt_path: Path, out_path: Path):
             "-vf",
             (
                 "subtitles="
-                f"{srt_path}:"
-                "force_style="
-                "'PlayResX=1080,"
-                "PlayResY=1920,"
-                "Fontname=Arial,"
-                "Fontsize=28,"
+                f"{srt_path}:force_style="
+                "'Fontname=Arial,"
+                "Fontsize=30,"
                 "PrimaryColour=&HFFFFFF&,"
                 "OutlineColour=&H000000&,"
                 "Outline=2,"
                 "Shadow=1,"
                 "Alignment=2,"
-                "MarginV=120'"
+                "MarginV=48'"
             ),
             "-c:a", "copy",
             str(out_path),
