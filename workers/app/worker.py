@@ -84,6 +84,9 @@ def main():
         job, receipt = result
         print("Got job:", job)
 
+        WITH_CAPTIONS = job.get("captions", True)
+        print(f"Captions enabled: {WITH_CAPTIONS}")
+
         # per-job temp dir
         job_dir = TMP_DIR / job["job_id"]
         job_dir.mkdir(parents=True, exist_ok=True)
@@ -125,7 +128,6 @@ def main():
             clip_out_dir = job_dir / "clips"
 
             for idx, clip in enumerate(clips):
-                # 1. Cut raw clip
                 raw_clip_path = cut_clip(
                     video_path=video_path,
                     start=clip["start"],
@@ -136,27 +138,28 @@ def main():
                 )
                 print("Clip created:", raw_clip_path)
 
-                # 2. Build SRT for this clip
-                srt_path = clip_out_dir / f"clip_{idx}.srt"
-                build_srt(
-                    segments=segments,
-                    start=clip["start"],
-                    end=clip["end"],
-                    out_path=srt_path,
-                )
-                print("Captions SRT created:", srt_path)
+                if WITH_CAPTIONS:
+                    srt_path = clip_out_dir / f"clip_{idx}.srt"
+                    build_srt(
+                        segments=segments,
+                        start=clip["start"],
+                        end=clip["end"],
+                        out_path=srt_path,
+                    )
 
-                # 3. Burn captions into video
-                captioned_path = clip_out_dir / f"clip_{idx}_cap.mp4"
-                burn_captions(
-                    video_path=raw_clip_path,
-                    srt_path=srt_path,
-                    out_path=captioned_path,
-                )
-                print("Captioned clip created:", captioned_path)
+                    captioned_path = clip_out_dir / f"clip_{idx}_cap.mp4"
+                    burn_captions(
+                        video_path=raw_clip_path,
+                        srt_path=srt_path,
+                        out_path=captioned_path,
+                    )
 
-                # 4. Use captioned clip from now on
-                clip_paths.append(captioned_path)
+                    clip_paths.append(captioned_path)
+                    print("Captioned clip created:", captioned_path)
+                else:
+                    clip_paths.append(raw_clip_path)
+                    print("Captions skipped")
+
 
             # SUMMARY + CAPTION GENERATION
             try:

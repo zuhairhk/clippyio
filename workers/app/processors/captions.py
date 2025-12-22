@@ -36,9 +36,18 @@ def burn_captions(video_path: Path, srt_path: Path, out_path: Path):
             "ffmpeg", "-y",
             "-i", str(video_path),
             "-vf",
-            "subtitles="
-            f"{srt_path}:force_style="
-            "'Fontsize=24,PrimaryColour=&HFFFFFF&,OutlineColour=&H000000&,Outline=2,Alignment=2'",
+            (
+                "subtitles="
+                f"{srt_path}:force_style="
+                "'Fontname=Arial,"
+                "Fontsize=16,"
+                "PrimaryColour=&HFFFFFF&,"
+                "OutlineColour=&H000000&,"
+                "Outline=2,"
+                "Shadow=1,"
+                "Alignment=2,"
+                "MarginV=48'"
+            ),
             "-c:a", "copy",
             str(out_path),
         ],

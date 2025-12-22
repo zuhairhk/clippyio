@@ -11,6 +11,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const [withCaptions, setWithCaptions] = useState(true);
 
   async function handleUpload() {
     if (!file) return;
@@ -18,6 +19,7 @@ export default function UploadPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("captions", String(withCaptions));
 
     const res = await fetch(`${API_BASE}/upload`, {
       method: "POST",
