@@ -238,7 +238,7 @@ export default function JobPage() {
       <div className="mt-8 text-center">
         <button
           onClick={() => router.push("/")}
-          className="rounded-full bg-white text-neutral-900 font-medium px-6 py-3 hover:bg-neutral-200 transition"
+          className="rounded-full bg-white text-neutral-900 font-medium px-6 py-3 hover:bg-neutral-200 transition cursor-pointer"
         >
           Upload another video
         </button>
