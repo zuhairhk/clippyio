@@ -6,11 +6,48 @@ import { useRouter } from "next/navigation";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
+function Toggle({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium text-white">{label}</p>
+        <p className="text-xs text-neutral-400">{description}</p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition
+          ${value ? "bg-white" : "bg-white/20"}`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-neutral-900 transition
+            ${value ? "translate-x-5" : "translate-x-1"}`}
+        />
+      </button>
+    </div>
+  );
+}
+
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // Toggles (ALL ON by default)
+  const [withSummary, setWithSummary] = useState(true);
+  const [withVideoCaption, setWithVideoCaption] = useState(true);
   const [withCaptions, setWithCaptions] = useState(true);
 
   async function handleUpload() {
@@ -19,6 +56,8 @@ export default function UploadPage() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("summary", String(withSummary));
+    formData.append("video_caption", String(withVideoCaption));
     formData.append("captions", String(withCaptions));
 
     const res = await fetch(`${API_BASE}/upload`, {
@@ -54,7 +93,7 @@ export default function UploadPage() {
         <div
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
-          className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-8 sm:p-10 transition hover:border-white/20"
+          className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-8 sm:p-10"
         >
           {/* Drop zone */}
           <div
@@ -89,9 +128,7 @@ export default function UploadPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-white font-medium">
-                    {file.name}
-                  </p>
+                  <p className="text-white font-medium">{file.name}</p>
                   <p className="text-neutral-400 text-sm">
                     {(file.size / (1024 * 1024)).toFixed(1)} MB
                   </p>
@@ -107,6 +144,30 @@ export default function UploadPage() {
               onChange={e =>
                 setFile(e.target.files?.[0] ?? null)
               }
+            />
+          </div>
+
+          {/* Toggles */}
+          <div className="mt-6 space-y-3">
+            <Toggle
+              label="Generate summary"
+              description="Short AI summary of the video"
+              value={withSummary}
+              onChange={() => setWithSummary(v => !v)}
+            />
+
+            <Toggle
+              label="Generate video caption"
+              description="AI caption text for posting"
+              value={withVideoCaption}
+              onChange={() => setWithVideoCaption(v => !v)}
+            />
+
+            <Toggle
+              label="Burn captions (CC)"
+              description="Subtitles burned into the video"
+              value={withCaptions}
+              onChange={() => setWithCaptions(v => !v)}
             />
           </div>
 

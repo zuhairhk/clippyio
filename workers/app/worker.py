@@ -4,6 +4,8 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 import shutil
+import torch
+
 from app.processors.audio import extract_audio
 from app.processors.transcribe import transcribe_audio
 from app.utils.transcript import save_transcript
@@ -11,9 +13,8 @@ from app.processors.summary import generate_summary
 from app.processors.caption import generate_caption
 from app.processors.clips import detect_clips
 from app.processors.cut import cut_clip
-from app.utils.s3_upload import upload_file
 from app.processors.captions import build_srt, burn_captions
-import torch
+from app.utils.s3_upload import upload_file
 
 load_dotenv()
 
@@ -84,51 +85,37 @@ def main():
         job, receipt = result
         print("Got job:", job)
 
+        WITH_SUMMARY = job.get("summary", True)
+        WITH_VIDEO_CAPTION = job.get("video_caption", True)
         WITH_CAPTIONS = job.get("captions", True)
-        print(f"Captions enabled: {WITH_CAPTIONS}")
 
-        # per-job temp dir
+        print(
+            f"Options → summary={WITH_SUMMARY}, "
+            f"video_caption={WITH_VIDEO_CAPTION}, "
+            f"captions={WITH_CAPTIONS}"
+        )
+
         job_dir = TMP_DIR / job["job_id"]
         job_dir.mkdir(parents=True, exist_ok=True)
 
-        # INITIAL STATUS UPLOAD (write a temp file then upload)
         status_path = job_dir / "status.json"
-        with open(status_path, "w") as f:
-            json.dump({"status": "processing"}, f)
+        status_path.write_text(json.dumps({"status": "processing"}))
         upload_file(status_path, f"results/{job['job_id']}/status.json")
 
         try:
-            # DOWNLOAD VIDEO
             video_path = download_video(job["s3_key"], job_dir)
-            print("Downloaded to:", video_path)
-            # EXTRACT AUDIO + TRANSCRIBE & SAVE TRANSCRIPT
             audio_path = extract_audio(video_path)
-            print("Audio extracted:", audio_path)
             transcript = transcribe_audio(audio_path, device=DEVICE)
-            print("Transcription done.")
-            transcript_path = save_transcript(transcript, job["job_id"], output_dir=job_dir)
-            print("Transcript saved to:", transcript_path)
-            
-            # PRINT TRANSCRIPT PREVIEW
+            save_transcript(transcript, job["job_id"], output_dir=job_dir)
+
             segments = transcript.get("segments", [])
-            print(f"Total segments: {len(segments)}")
-            for seg in segments[:5]:
-                print(
-                    f"[{seg['start']:.2f}s → {seg['end']:.2f}s] {seg['text']}"
-                )
 
-            # CLIP DETECTION
             clips = detect_clips(segments)
-            print(f"Detected {len(clips)} clips")
-            for c in clips:
-                print(f"[{c['start']}s → {c['end']}s] ({c['duration']}s)")
-
-            # CUT CLIPS + BURN CAPTIONS
             clip_paths = []
             clip_out_dir = job_dir / "clips"
 
             for idx, clip in enumerate(clips):
-                raw_clip_path = cut_clip(
+                raw_clip = cut_clip(
                     video_path=video_path,
                     start=clip["start"],
                     end=clip["end"],
@@ -136,7 +123,6 @@ def main():
                     job_id=job["job_id"],
                     out_dir=clip_out_dir,
                 )
-                print("Clip created:", raw_clip_path)
 
                 if WITH_CAPTIONS:
                     srt_path = clip_out_dir / f"clip_{idx}.srt"
@@ -147,99 +133,62 @@ def main():
                         out_path=srt_path,
                     )
 
-                    captioned_path = clip_out_dir / f"clip_{idx}_cap.mp4"
+                    captioned = clip_out_dir / f"clip_{idx}.mp4"
                     burn_captions(
-                        video_path=raw_clip_path,
+                        video_path=raw_clip,
                         srt_path=srt_path,
-                        out_path=captioned_path,
+                        out_path=captioned,
                     )
-
-                    clip_paths.append(captioned_path)
-                    print("Captioned clip created:", captioned_path)
+                    clip_paths.append(captioned)
                 else:
-                    clip_paths.append(raw_clip_path)
-                    print("Captions skipped")
+                    clip_paths.append(raw_clip)
 
-
-            # SUMMARY + CAPTION GENERATION
-            try:
+            summary = None
+            if WITH_SUMMARY:
                 summary = generate_summary(transcript["text"])
-                print("Summary:", summary)
-            except Exception as e:
-                print("Summary failed:", e)
-                summary = None
-            try:
-                caption = generate_caption(transcript["text"])
-                print("Caption:", caption)
-            except Exception as e:
-                print("Caption failed:", e)
-                caption = None
 
-            # UPLOAD RESULTS TO S3 AND CREATE RESULTS JSON LOG
+            caption = None
+            if WITH_VIDEO_CAPTION:
+                caption = generate_caption(transcript["text"])
+
             uploaded_clips = []
             for idx, path in enumerate(clip_paths):
                 s3_key = f"results/{job['job_id']}/clip_{idx}.mp4"
                 upload_file(path, s3_key)
                 uploaded_clips.append(s3_key)
-                print("Uploaded clip:", s3_key)
-
-            results_dir = job_dir
-            results_dir.mkdir(parents=True, exist_ok=True)
 
             results = {
                 "job_id": job["job_id"],
                 "summary": summary,
                 "caption": caption,
                 "clips": [
-                    {
-                        **clip,
-                        "s3_key": uploaded_clips[i]
-                    }
+                    {**clip, "s3_key": uploaded_clips[i]}
                     for i, clip in enumerate(clips)
                 ],
             }
 
-            results_path = results_dir / "results.json"
-            with open(results_path, "w") as f:
-                json.dump(results, f, indent=2)
+            results_path = job_dir / "results.json"
+            results_path.write_text(json.dumps(results, indent=2))
+            upload_file(results_path, f"results/{job['job_id']}/results.json")
 
-            print("Results JSON created:", results_path)
-            results_s3_key = f"results/{job['job_id']}/results.json"
-            upload_file(results_path, results_s3_key)
-            print("Uploaded results JSON:", results_s3_key)
-
-            # mark success status
-            success_status_path = job_dir / "status.json"
-            with open(success_status_path, "w") as f:
-                json.dump({"status": "done"}, f)
-            upload_file(success_status_path, f"results/{job['job_id']}/status.json")
-            print("Uploaded status 'done'")
+            status_path.write_text(json.dumps({"status": "done"}))
+            upload_file(status_path, f"results/{job['job_id']}/status.json")
 
             delete_message(receipt)
-
-            # cleanup job dir
             shutil.rmtree(job_dir, ignore_errors=True)
 
             print("Job done\n")
 
         except Exception as e:
             print("Job failed:", e)
-            # upload failed status
-            failed_status_path = job_dir / "status.json"
-            with open(failed_status_path, "w") as f:
-                json.dump({"status": "failed"}, f)
-            try:
-                upload_file(failed_status_path, f"results/{job['job_id']}/status.json")
-                print("Uploaded failed status")
-            except Exception as uerr:
-                print("Failed to upload failed status:", uerr)
-            delete_message(receipt)
 
-            # cleanup job dir even on failure
+            status_path.write_text(json.dumps({"status": "failed"}))
+            upload_file(status_path, f"results/{job['job_id']}/status.json")
+
+            delete_message(receipt)
             shutil.rmtree(job_dir, ignore_errors=True)
 
-            print("Job marked failed and message deleted\n")
-            continue
+            print("Job marked failed\n")
 
 
 if __name__ == "__main__":

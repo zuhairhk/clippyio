@@ -8,6 +8,8 @@ router = APIRouter()
 @router.post("/upload")
 async def upload_video(
     file: UploadFile = File(...),
+    summary: bool = Form(True),
+    video_caption: bool = Form(True),
     captions: bool = Form(True),
 ):
     s3_key = upload_file(file.file, file.filename)
@@ -17,6 +19,8 @@ async def upload_video(
     push_job({
         "job_id": job_id,
         "s3_key": s3_key,
+        "summary": summary,
+        "video_caption": video_caption,
         "captions": captions,
     })
 
