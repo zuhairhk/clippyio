@@ -12,6 +12,7 @@ from app.processors.caption import generate_caption
 from app.processors.clips import detect_clips
 from app.processors.cut import cut_clip
 from app.utils.s3_upload import upload_file
+import torch
 
 load_dotenv()
 
@@ -71,6 +72,9 @@ def download_video(s3_key: str, job_dir: Path) -> Path:
 def main():
     print("Worker started. Waiting for jobs...")
 
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using device: {DEVICE}")
+
     while True:
         result = poll_queue()
         if not result:
@@ -96,7 +100,7 @@ def main():
             # EXTRACT AUDIO + TRANSCRIBE & SAVE TRANSCRIPT
             audio_path = extract_audio(video_path)
             print("Audio extracted:", audio_path)
-            transcript = transcribe_audio(audio_path)
+            transcript = transcribe_audio(audio_path, device=DEVICE)
             print("Transcription done.")
             transcript_path = save_transcript(transcript, job["job_id"], output_dir=job_dir)
             print("Transcript saved to:", transcript_path)
