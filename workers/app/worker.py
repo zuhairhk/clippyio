@@ -12,6 +12,7 @@ from app.processors.caption import generate_caption
 from app.processors.clips import detect_clips
 from app.processors.cut import cut_clip
 from app.utils.s3_upload import upload_file
+from app.processors.captions import build_srt, burn_captions
 import torch
 
 load_dotenv()
@@ -119,11 +120,13 @@ def main():
             for c in clips:
                 print(f"[{c['start']}s → {c['end']}s] ({c['duration']}s)")
 
-            # CUT CLIPS
+            # CUT CLIPS + BURN CAPTIONS
             clip_paths = []
+            clip_out_dir = job_dir / "clips"
+
             for idx, clip in enumerate(clips):
-                clip_out_dir = job_dir / "clips"
-                path = cut_clip(
+                # 1. Cut raw clip
+                raw_clip_path = cut_clip(
                     video_path=video_path,
                     start=clip["start"],
                     end=clip["end"],
@@ -131,8 +134,29 @@ def main():
                     job_id=job["job_id"],
                     out_dir=clip_out_dir,
                 )
-                clip_paths.append(path)
-                print("Clip created:", path)
+                print("Clip created:", raw_clip_path)
+
+                # 2. Build SRT for this clip
+                srt_path = clip_out_dir / f"clip_{idx}.srt"
+                build_srt(
+                    segments=segments,
+                    start=clip["start"],
+                    end=clip["end"],
+                    out_path=srt_path,
+                )
+                print("Captions SRT created:", srt_path)
+
+                # 3. Burn captions into video
+                captioned_path = clip_out_dir / f"clip_{idx}_cap.mp4"
+                burn_captions(
+                    video_path=raw_clip_path,
+                    srt_path=srt_path,
+                    out_path=captioned_path,
+                )
+                print("Captioned clip created:", captioned_path)
+
+                # 4. Use captioned clip from now on
+                clip_paths.append(captioned_path)
 
             # SUMMARY + CAPTION GENERATION
             try:
