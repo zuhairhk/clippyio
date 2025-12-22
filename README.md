@@ -1,4 +1,5 @@
-# ClippyIO — Distributed AI Video Processing Platform
+# ClippyIO 
+## Distributed Smart Video Processing Tool for Long Form Content into Shorts
 
 ## Workflow Overview
 
@@ -149,11 +150,7 @@ Frontend polling → User receives clips
   - Processed clips  
   - Status and results metadata  
 - **SQS**
-  - Asynchronous job orchestration  
-- **IAM**
-  - Scoped programmatic access  
-- **Service Quotas**
-  - GPU capacity management  
+  - Asynchronous job orchestration 
 
 **Design**
 - Decoupled compute layers  
