@@ -1,5 +1,5 @@
 # ClippyIO 
-## Distributed Smart Video Processing Tool for Long Form Content into Shorts
+Distributed Smart Video Processing Tool for Long Form Content into Shorts
 
 ## Workflow Overview
 
