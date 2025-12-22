@@ -6,6 +6,8 @@
 *.pem
 *.key
 clippyio-ec2.pem
+vast
+vast.pub
 
 # =========================
 # PYTHON
