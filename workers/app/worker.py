@@ -4,14 +4,14 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 import shutil
-from processors.audio import extract_audio
-from processors.transcribe import transcribe_audio
-from utils.transcript import save_transcript
-from processors.summary import generate_summary
-from processors.caption import generate_caption
-from processors.clips import detect_clips
-from processors.cut import cut_clip
-from utils.s3_upload import upload_file
+from app.processors.audio import extract_audio
+from app.processors.transcribe import transcribe_audio
+from app.utils.transcript import save_transcript
+from app.processors.summary import generate_summary
+from app.processors.caption import generate_caption
+from app.processors.clips import detect_clips
+from app.processors.cut import cut_clip
+from app.utils.s3_upload import upload_file
 
 load_dotenv()
 
