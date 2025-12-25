@@ -80,7 +80,7 @@ export default function JobPage() {
   function PageShell({ children }: { children: React.ReactNode }) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 flex justify-center px-4 py-8">
-        <div className="w-full max-w-4xl">
+        <div className="w-full max-w-5xl">
           <h1 className="text-center text-4xl font-semibold text-white tracking-tight mb-8">
             ClippyIO
           </h1>
@@ -103,7 +103,7 @@ export default function JobPage() {
             Status: {status}
           </p>
           <p className="mt-4 text-neutral-500 text-sm">
-            This usually takes 1-5 minutes
+            This usually takes 1–5 minutes
           </p>
         </div>
       </PageShell>
@@ -140,96 +140,85 @@ export default function JobPage() {
 
   return (
     <PageShell>
-      {/* Summary + Caption */}
-      <section className="grid md:grid-cols-2 gap-4 mb-6">
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
-          <h2 className="text-white font-medium mb-2">Summary</h2>
-          <p className="text-neutral-300 text-sm leading-relaxed">
-            {results.summary ?? "No summary generated."}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
-          <h2 className="text-white font-medium mb-2">Caption</h2>
-          <p className="text-neutral-300 text-sm">
-            {results.caption ?? "No caption generated."}
-          </p>
-        </div>
-      </section>
-
-      {/* Clip Viewer */}
       {results.clips.length > 0 && (
-        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6">
-          {/* Video stage */}
-          <div className="relative rounded-xl bg-neutral-800/60 flex items-center justify-center overflow-hidden">
-            <video
-              key={activeClip}
-              src={clip.url}
-              controls
-              preload="metadata"
-              className="
-                max-h-[60vh]
-                w-auto
-                max-w-full
-                rounded-lg
-                object-contain
-                shadow-2xl
-              "
-            />
+        <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+
+          {/* LEFT: Summary + Caption */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
+              <h2 className="text-white font-medium mb-2">Summary</h2>
+              <p className="text-neutral-300 text-sm leading-relaxed">
+                {results.summary ?? "No summary generated."}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-5">
+              <h2 className="text-white font-medium mb-2">Caption</h2>
+              <p className="text-neutral-300 text-sm">
+                {results.caption ?? "No caption generated."}
+              </p>
+            </div>
           </div>
 
-          {/* Controls */}
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <button
-              onClick={() => setActiveClip(i => Math.max(i - 1, 0))}
-              disabled={activeClip === 0}
-              className="
-                px-4 py-2 rounded-full
-                bg-white/10 text-white
-                hover:bg-white/20
-                disabled:opacity-40
-                transition
-              "
-            >
-              Prev
-            </button>
+          {/* RIGHT: Video */}
+          <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-xl p-6 flex flex-col">
+            <div className="relative flex-1 rounded-xl bg-neutral-800/60 flex items-center justify-center overflow-hidden">
+              <video
+                key={activeClip}
+                src={clip.url}
+                controls
+                preload="metadata"
+                className="
+                  max-h-[45vh]
+                  w-full
+                  rounded-lg
+                  object-contain
+                  shadow-2xl
+                "
+              />
+            </div>
 
-            <span className="text-neutral-400">
-              Clip {activeClip + 1} of {results.clips.length}
-            </span>
+            {/* Controls */}
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <button
+                onClick={() => setActiveClip(i => Math.max(i - 1, 0))}
+                disabled={activeClip === 0}
+                className="px-4 py-2 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-40 transition"
+              >
+                Prev
+              </button>
 
-            <button
-              onClick={() =>
-                setActiveClip(i =>
-                  Math.min(i + 1, results.clips.length - 1)
-                )
-              }
-              disabled={activeClip === results.clips.length - 1}
-              className="
-                px-4 py-2 rounded-full
-                bg-white/10 text-white
-                hover:bg-white/20
-                disabled:opacity-40
-                transition
-              "
-            >
-              Next
-            </button>
-          </div>
+              <span className="text-neutral-400">
+                Clip {activeClip + 1} of {results.clips.length}
+              </span>
 
-          {/* Download */}
-          <div className="mt-4 text-center">
-            <a
-              href={clip.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-white underline text-sm"
-            >
-              Download clip
-            </a>
-            <span className="text-neutral-500 text-xs ml-2">
-              {clip.duration.toFixed(1)}s
-            </span>
+              <button
+                onClick={() =>
+                  setActiveClip(i =>
+                    Math.min(i + 1, results.clips.length - 1)
+                  )
+                }
+                disabled={activeClip === results.clips.length - 1}
+                className="px-4 py-2 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-40 transition"
+              >
+                Next
+              </button>
+            </div>
+
+            {/* Download */}
+            <div className="mt-3 text-center">
+              <a
+                href={clip.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-white underline text-sm"
+              >
+                Download clip
+              </a>
+              <span className="text-neutral-500 text-xs ml-2">
+                {clip.duration.toFixed(1)}s
+              </span>
+            </div>
           </div>
         </section>
       )}
