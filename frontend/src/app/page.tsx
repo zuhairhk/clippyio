@@ -74,7 +74,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight">
-              Editing shouldn’t break momentum
+              Editing shouldn't break momentum
             </h2>
             <ul className="mt-8 space-y-4 text-neutral-400 text-lg">
               <li>• Finding moments takes too long</li>
@@ -121,7 +121,7 @@ export default function LandingPage() {
               },
               {
                 title: "Async processing",
-                desc: "Upload and come back later — no waiting.",
+                desc: "Upload and come back later, no waiting.",
               },
               {
                 title: "Multi-platform ready",
@@ -224,7 +224,7 @@ export default function LandingPage() {
           </button>
 
           <div className="mt-8 text-center text-sm text-neutral-400">
-            <p>Don’t have a code?</p>
+            <p>Don't have a code?</p>
             <p className="mt-2">
               <a
                 href="mailto:zuhairhk@gmail.com"
